@@ -49,6 +49,8 @@ typedef struct {
   i2c_port_num_t i2c_port;
   /* I2C clock speed in Hz (e.g., 100000 for 100kHz, 400000 for 400kHz) */
   uint32_t i2c_clk_speed;
+  /* Pre-initialized I2C bus handle (optional, set to NULL to auto init) */
+  i2c_master_bus_handle_t i2c_bus_handle;
   /* SPI host device (e.g., SPI2_HOST or SPI3_HOST) */
   spi_host_device_t spi_host;
   /* SPI clock speed in Hz (e.g., 1000000 for 1MHz, 10000000 for 10MHz) */
@@ -66,6 +68,7 @@ typedef struct {
    .dc = U8G2_ESP32_HAL_UNDEFINED,                   \
    .i2c_port = I2C_NUM_0,                            \
    .i2c_clk_speed = 400000,                          \
+   .i2c_bus_handle = NULL,                           \
    .spi_host = SPI2_HOST,                            \
    .spi_clk_speed = 1000000}
 
@@ -88,5 +91,11 @@ uint8_t u8g2_esp32_gpio_and_delay_cb(u8x8_t* u8x8,
                                      uint8_t msg,
                                      uint8_t arg_int,
                                      void* arg_ptr);
+
+/**
+ * Deinitialize the HAL and release all resources.
+ * Call this to clean up I2C/SPI resources before reinitializing.
+ */
+void u8g2_esp32_hal_deinit(void);
 
 #endif /* U8G2_ESP32_HAL_H_ */
