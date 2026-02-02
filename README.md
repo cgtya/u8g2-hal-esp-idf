@@ -1,4 +1,5 @@
-# U8g2 compatibility component for ESP-IDF on ESP32
+# U8g2 ESP-IDF HAL 
+> Hardware abstraction layer for [U8g2](https://github.com/olikraus/u8g2) on ESP32, optimized for ESP-IDF 5.x. (Modified to use the newer i2c_master driver)
 ## Note
 This is effectively a fork of the U8G2 code that is part of Neil Kolban's excellent `esp32-snippets` repository. It can be found 
 [here](https://github.com/nkolban/esp32-snippets/tree/master/hardware/displays/U8G2).
@@ -24,25 +25,26 @@ the functions expected by the library to the underlying MCU board hardware. This
 
 The code in this folder provides a mapping from U8g2 to the ESP32 ESP-IDF. This should be included in your build of U8g2 applications.
 
-To use with the ESP32, we must invoke the `u8g2_esp32_hal_init()` function before invoking any of the normal U8g2 functons.  What
-this call does is tell the ESP32 what pins we wish to map.  Here is an example of SPI use:
-
-```
+### SPI Example
+```c
 u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
 u8g2_esp32_hal.bus.spi.clk   = PIN_CLK;
 u8g2_esp32_hal.bus.spi.mosi  = PIN_MOSI;
 u8g2_esp32_hal.bus.spi.cs    = PIN_CS;
-u8g2_esp32_hal.dc    = PIN_DC;
-u8g2_esp32_hal.reset = PIN_RESET;
+u8g2_esp32_hal.dc            = PIN_DC;
+u8g2_esp32_hal.reset         = PIN_RESET;
+u8g2_esp32_hal.spi_host      = SPI2_HOST;
+u8g2_esp32_hal.spi_clk_speed = 10000000; // 10MHz
 u8g2_esp32_hal_init(u8g2_esp32_hal);
 ```
 
-and here is an example of I2C use:
-
-```
+### I2C Example
+```c
 u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
-u8g2_esp32_hal.bus.i2c.sda = PIN_SDA;
-u8g2_esp32_hal.bus.i2c.scl = PIN_SCL;
+u8g2_esp32_hal.bus.i2c.sda    = PIN_SDA;
+u8g2_esp32_hal.bus.i2c.scl    = PIN_SCL;
+u8g2_esp32_hal.i2c_port       = I2C_NUM_0;
+u8g2_esp32_hal.i2c_clk_speed  = 400000; // 400kHz
 u8g2_esp32_hal_init(u8g2_esp32_hal);
 ```
 
@@ -56,9 +58,28 @@ Note that `<address>` is the I2C address already shifted left to include the rea
 
 The function takes as input a `u8g2_esp32_hal` structure instance which has the logical pins that U8g2 needs mapped to the
 physical pins on the ESP32 that we wish to use.  If we don't use a specific pin for our specific display, set the value to
-be `U8G2_ESP32_HAL_UNDEFINED` which is the default initialization value.
+be `U8G2_ESP32_HAL_UNDEFINED` (which is `GPIO_NUM_NC`).
 
-Remember, ESP32 pins are not hard-coded to functions and as such, all the GPIO pins on the ESP32 are open for use.  Following
+| Field | Description | Default |
+|-------|-------------|---------|
+| `bus.spi.clk` | SPI Clock GPIO | `UNDEFINED` |
+| `bus.spi.mosi` | SPI MOSI GPIO | `UNDEFINED` |
+| `bus.spi.cs` | SPI Chip Select GPIO | `UNDEFINED` |
+| `bus.i2c.sda` | I2C Data GPIO | `UNDEFINED` |
+| `bus.i2c.scl` | I2C Clock GPIO | `UNDEFINED` |
+| `reset` | Reset GPIO | `UNDEFINED` |
+| `dc` | Data/Command GPIO | `UNDEFINED` |
+| `i2c_port` | I2C Port Number | `I2C_NUM_0` |
+| `i2c_clk_speed` | I2C Clock Speed (Hz) | `400000` |
+| `spi_host` | SPI Host Device | `SPI2_HOST` |
+| `spi_clk_speed` | SPI Clock Speed (Hz) | `1000000` |
+
+### Key Features
+- **ESP-IDF 5.x Ready**: Fully migrated to the new `i2c_master` and `spi_master` drivers.
+- **Configurable**: Easily set I2C ports, SPI hosts, and clock speeds via the HAL structure.
+- **Efficient**: Uses hardware peripherals for communication, minimizing CPU usage.
+
+Remember, ESP32 pins are not hard-coded to functions and as such, all the GPIO pins on the ESP32 are open for use (via the IO MUX or GPIO Matrix). Following
 this initialization, we can use U8g2 as normal and described in the U8g2 documentation.
 
 ## Installation
